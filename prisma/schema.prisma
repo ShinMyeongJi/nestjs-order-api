@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// 상품 테이블 - 재고(stock)는 동시성 제어를 위해 Atomic Update로만 변경
+model Product {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  price       Int      // 원 단위 정수 저장 (부동소수점 회피)
+  stock       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  orderItems OrderItem[]
+
+  @@index([name])
+  @@map("products")
+}
+
+/// 주문 상태 열거형
+enum OrderStatus {
+  PENDING    // 주문 생성 직후 (결제 대기)
+  COMPLETED  // 결제 완료
+  CANCELLED  // 주문 취소
+  FAILED     // 결제 실패
+}
+
+/// 주문 테이블 - idempotencyKey로 중복 주문 방지
+model Order {
+  id             String      @id @default(uuid())
+  idempotencyKey String      @unique @map("idempotency_key") @db.VarChar(255)
+  status         OrderStatus @default(PENDING)
+  totalAmount    Int         @map("total_amount") // 원 단위 정수
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  items    OrderItem[]
+  payments Payment[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+/// 주문 항목 - 주문 시점의 가격을 스냅샷으로 보관
+model OrderItem {
+  id        String @id @default(uuid())
+  orderId   String @map("order_id")
+  productId String @map("product_id")
+  quantity  Int
+  unitPrice Int    @map("unit_price") // 주문 시점 단가 스냅샷
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+/// 결제 상태 열거형
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  FAILED
+  REFUNDED
+}
+
+/// 결제 테이블 - 하나의 주문에 여러 결제 시도 가능 (재시도 대비)
+model Payment {
+  id            String        @id @default(uuid())
+  orderId       String        @map("order_id")
+  amount        Int
+  status        PaymentStatus @default(PENDING)
+  transactionId String?       @unique @map("transaction_id") @db.VarChar(255)
+  failureReason String?       @map("failure_reason") @db.Text
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([status])
+  @@map("payments")
+}
