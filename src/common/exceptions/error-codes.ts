@@ -10,7 +10,6 @@ export const ErrorCodes = {
 
   // Order 도메인
   ORDER_NOT_FOUND: 'ORDER_NOT_FOUND',
-  DUPLICATE_ORDER: 'DUPLICATE_ORDER',
   INVALID_ORDER_STATUS: 'INVALID_ORDER_STATUS',
 
   // Payment 도메인

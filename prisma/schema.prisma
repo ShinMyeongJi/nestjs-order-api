@@ -69,7 +69,6 @@ enum PaymentStatus {
   PENDING
   APPROVED
   FAILED
-  REFUNDED
 }
 
 /// 결제 테이블 - 하나의 주문에 여러 결제 시도 가능 (재시도 대비)

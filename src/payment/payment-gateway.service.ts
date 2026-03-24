@@ -5,7 +5,8 @@ import { BusinessException, ErrorCodes } from '../common';
 /**
  * Mock 결제 게이트웨이
  * - 실제 PG사 연동을 시뮬레이션
- * - 인터페이스 기반으로 설계하여 실제 PG 연동 시 구현체만 교체 가능
+ * - NestJS의 DI 토큰 기반으로 실제 PG 구현체로 교체 가능
+ *   (Module의 providers에서 PaymentGatewayService를 다른 클래스로 교체)
  * - 90% 확률로 성공, 10% 확률로 실패 (실제 환경 시뮬레이션)
  */
 export interface PaymentGatewayResult {

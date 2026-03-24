@@ -19,9 +19,10 @@ export class OrderService {
   /**
    * 주문 생성 - Prisma Interactive Transaction으로 원자성 보장
    *
-   * Spring의 @Transactional(isolation = SERIALIZABLE)과 대응.
+   * Spring의 @Transactional과 대응.
    * Prisma의 Interactive Transaction은 내부적으로 BEGIN → COMMIT/ROLLBACK을 관리하며,
    * 콜백 내에서 예외 발생 시 자동 롤백됨.
+   * (격리 수준은 MySQL 기본값인 REPEATABLE READ를 따름)
    *
    * 처리 흐름:
    * 1. Idempotency Key 중복 검사 (이미 존재하면 기존 주문 반환)
